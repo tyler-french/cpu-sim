@@ -123,11 +123,67 @@ body {
 .editor-container {
   height: 200px;
   overflow: hidden;
-  transition: height 0.3s ease;
 }
 
 .editor-container.expanded {
-  height: 400px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  height: 85vh;
+  max-width: 1200px;
+  z-index: 1000;
+  border-radius: 12px;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
+  border: 1px solid var(--accent-blue);
+  background: var(--bg-secondary);
+}
+
+.editor-container.expanded .cm-editor {
+  font-size: 1rem;
+}
+
+.editor-close-btn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.editor-close-btn:hover {
+  background: var(--accent-red);
+  border-color: var(--accent-red);
+  color: white;
+}
+
+.editor-container.expanded .editor-close-btn {
+  display: block;
+}
+
+.editor-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 999;
+  display: none;
+}
+
+.editor-overlay.active {
+  display: block;
 }
 
 .editor-container .cm-editor {
@@ -135,19 +191,27 @@ body {
 }
 
 .expand-btn {
-  background: none;
-  border: none;
-  color: var(--text-muted);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   cursor: pointer;
-  padding: 2px 6px;
-  font-size: 0.7rem;
-  opacity: 0.7;
-  transition: opacity 0.15s ease;
+  padding: 6px 12px;
+  font-size: 1rem;
+  border-radius: 6px;
+  transition: all 0.15s ease;
 }
 
 .expand-btn:hover {
-  opacity: 1;
-  color: var(--accent-blue);
+  background: var(--accent-blue);
+  color: var(--bg-primary);
+  border-color: var(--accent-blue);
+}
+
+.editor-container.expanded + .controls .expand-btn,
+.expand-btn.active {
+  background: var(--accent-blue);
+  color: var(--bg-primary);
+  border-color: var(--accent-blue);
 }
 
 .line-count {

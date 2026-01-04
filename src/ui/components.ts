@@ -23,7 +23,10 @@ export function createApp(): HTMLElement {
               <button class="expand-btn" id="expandEditor" title="Toggle editor size">⤢</button>
             </div>
           </div>
-          <div class="editor-container" id="editorContainer"></div>
+          <div class="editor-container" id="editorContainer">
+            <button class="editor-close-btn" id="editorCloseBtn" title="Close">✕</button>
+          </div>
+          <div class="editor-overlay" id="editorOverlay"></div>
           <div class="controls">
             <button class="btn btn-primary" id="assembleBtn" title="Parse assembly code and prepare for execution">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

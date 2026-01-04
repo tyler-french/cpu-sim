@@ -198,12 +198,38 @@ class Simulator {
     // Editor expand/collapse toggle
     const expandBtn = document.getElementById('expandEditor');
     const editorContainer = document.getElementById('editorContainer');
-    if (expandBtn && editorContainer) {
-      expandBtn.addEventListener('click', () => {
-        editorContainer.classList.toggle('expanded');
-        expandBtn.textContent = editorContainer.classList.contains('expanded') ? '⤡' : '⤢';
-      });
+    const editorOverlay = document.getElementById('editorOverlay');
+    const editorCloseBtn = document.getElementById('editorCloseBtn');
+
+    const toggleExpand = () => {
+      if (editorContainer && editorOverlay && expandBtn) {
+        const isExpanded = editorContainer.classList.toggle('expanded');
+        editorOverlay.classList.toggle('active', isExpanded);
+        expandBtn.textContent = isExpanded ? '✕' : '⤢';
+        expandBtn.title = isExpanded ? 'Close expanded editor' : 'Expand editor fullscreen';
+      }
+    };
+
+    if (expandBtn) {
+      expandBtn.addEventListener('click', toggleExpand);
     }
+
+    // Close button
+    if (editorCloseBtn) {
+      editorCloseBtn.addEventListener('click', toggleExpand);
+    }
+
+    // Click overlay to close
+    if (editorOverlay) {
+      editorOverlay.addEventListener('click', toggleExpand);
+    }
+
+    // Escape key to close
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && editorContainer?.classList.contains('expanded')) {
+        toggleExpand();
+      }
+    });
   }
 
   private updateSpeedDisplay(): void {
