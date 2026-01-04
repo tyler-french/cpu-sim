@@ -32,7 +32,6 @@ class Simulator {
   private gpu: GPU;
   private assembler: Assembler;
   private editor: EditorView | null = null;
-  private running = false;
   private runInterval: number | null = null;
   private speed = 500; // Default 500ms for slower visualization
   private sourceMap: number[] = []; // Maps instruction index to source line
@@ -48,6 +47,7 @@ class Simulator {
   // Buttons
   private assembleBtn!: HTMLButtonElement;
   private runBtn!: HTMLButtonElement;
+  private runMicroBtn!: HTMLButtonElement;
   private stepBtn!: HTMLButtonElement;
   private microStepBtn!: HTMLButtonElement;
   private stopBtn!: HTMLButtonElement;
@@ -153,7 +153,7 @@ class Simulator {
     this.updateLineCount(examples[0]?.code ?? '');
     this.updateSpeedDisplay();
     log(this.consoleEl, 'Welcome to CPU & GPU Simulator!', 'info');
-    log(this.consoleEl, '"Run" shows micro-phases, "Step" executes full instructions.', 'info');
+    log(this.consoleEl, 'Hover over buttons for descriptions.', 'info');
     setStatus('ready');
     this.updateUI();
   }
@@ -168,6 +168,7 @@ class Simulator {
 
     this.assembleBtn = document.getElementById('assembleBtn') as HTMLButtonElement;
     this.runBtn = document.getElementById('runBtn') as HTMLButtonElement;
+    this.runMicroBtn = document.getElementById('runMicroBtn') as HTMLButtonElement;
     this.stepBtn = document.getElementById('stepBtn') as HTMLButtonElement;
     this.microStepBtn = document.getElementById('microStepBtn') as HTMLButtonElement;
     this.stopBtn = document.getElementById('stopBtn') as HTMLButtonElement;
@@ -178,7 +179,8 @@ class Simulator {
 
   private setupEventListeners(): void {
     this.assembleBtn.addEventListener('click', () => this.assemble());
-    this.runBtn.addEventListener('click', () => this.run());
+    this.runBtn.addEventListener('click', () => this.run(false));
+    this.runMicroBtn.addEventListener('click', () => this.run(true));
     this.stepBtn.addEventListener('click', () => this.step());
     this.microStepBtn.addEventListener('click', () => this.microStep());
     this.stopBtn.addEventListener('click', () => this.stop());
@@ -186,19 +188,38 @@ class Simulator {
 
     this.speedSlider.addEventListener('input', () => {
       this.updateSpeedDisplay();
-      if (this.running) {
-        this.stop();
-        this.run();
-      }
     });
   }
 
   private updateSpeedDisplay(): void {
-    // Slider goes from 1 to 200
-    // Map to 50ms - 2000ms (inverted: high slider = fast = low ms)
+    // Logarithmic scale: left=10s, middle=100ms, right=10ms
+    // Slider: 0-200, where 100 is middle
     const sliderVal = parseInt(this.speedSlider.value, 10);
-    this.speed = Math.round(50 + (200 - sliderVal) * 9.75); // 50 to 2000ms
-    this.speedValue.textContent = `${this.speed}ms`;
+
+    // Use logarithmic interpolation
+    // At 0: 10000ms, at 100: 100ms, at 200: 10ms
+    // log10(10000) = 4, log10(100) = 2, log10(10) = 1
+    const logMin = 1;   // log10(10)
+    const logMax = 4;   // log10(10000)
+    const logMid = 2;   // log10(100)
+
+    let logSpeed: number;
+    if (sliderVal <= 100) {
+      // Left half: 10s to 100ms (log 4 to log 2)
+      logSpeed = logMax - (sliderVal / 100) * (logMax - logMid);
+    } else {
+      // Right half: 100ms to 10ms (log 2 to log 1)
+      logSpeed = logMid - ((sliderVal - 100) / 100) * (logMid - logMin);
+    }
+
+    this.speed = Math.round(Math.pow(10, logSpeed));
+
+    // Format display
+    if (this.speed >= 1000) {
+      this.speedValue.textContent = `${(this.speed / 1000).toFixed(1)}s`;
+    } else {
+      this.speedValue.textContent = `${this.speed}ms`;
+    }
   }
 
   private initExamplesDropdown(): void {
@@ -296,6 +317,7 @@ class Simulator {
     this.instructionCountEl.textContent = result.program.instructions.length.toString();
 
     this.runBtn.disabled = false;
+    this.runMicroBtn.disabled = false;
     this.stepBtn.disabled = false;
     this.microStepBtn.disabled = false;
     setStatus('ready');
@@ -303,21 +325,32 @@ class Simulator {
     this.highlightCurrentLine();
   }
 
-  private run(): void {
+  private run(microMode: boolean): void {
     if (this.cpu.isHalted()) return;
 
-    this.running = true;
     setStatus('running');
     this.runBtn.disabled = true;
+    this.runMicroBtn.disabled = true;
+    this.stepBtn.disabled = true;
+    this.microStepBtn.disabled = true;
     this.stopBtn.disabled = false;
 
-    // Run uses micro-stepping to show fetch/decode/execute/writeback phases
-    this.runInterval = window.setInterval(() => {
-      const microOp = this.cpu.microStep();
-      if (!microOp && this.cpu.isHalted()) {
-        this.stop();
-      }
-    }, this.speed);
+    if (microMode) {
+      // Micro mode: step through each micro-operation (fetch/decode/execute/writeback)
+      this.runInterval = window.setInterval(() => {
+        const microOp = this.cpu.microStep();
+        if (!microOp && this.cpu.isHalted()) {
+          this.stop();
+        }
+      }, this.speed);
+    } else {
+      // Normal mode: execute full instructions
+      this.runInterval = window.setInterval(() => {
+        if (!this.cpu.step()) {
+          this.stop();
+        }
+      }, this.speed);
+    }
   }
 
   private step(): void {
@@ -331,17 +364,19 @@ class Simulator {
   }
 
   private stop(): void {
-    this.running = false;
-
     if (this.runInterval !== null) {
       clearInterval(this.runInterval);
       this.runInterval = null;
     }
 
-    this.runBtn.disabled = this.cpu.isHalted();
+    const halted = this.cpu.isHalted();
+    this.runBtn.disabled = halted;
+    this.runMicroBtn.disabled = halted;
+    this.stepBtn.disabled = halted;
+    this.microStepBtn.disabled = halted;
     this.stopBtn.disabled = true;
 
-    if (!this.cpu.isHalted()) {
+    if (!halted) {
       setStatus('paused');
     }
   }
@@ -353,6 +388,7 @@ class Simulator {
     resetGPUDisplay();
     this.sourceMap = [];
     this.runBtn.disabled = true;
+    this.runMicroBtn.disabled = true;
     this.stepBtn.disabled = true;
     this.microStepBtn.disabled = true;
     this.stopBtn.disabled = true;

@@ -24,7 +24,7 @@ export function createApp(): HTMLElement {
           </div>
           <div class="editor-container" id="editorContainer"></div>
           <div class="controls">
-            <button class="btn btn-primary" id="assembleBtn">
+            <button class="btn btn-primary" id="assembleBtn" title="Parse assembly code and prepare for execution">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                 <path d="M2 17l10 5 10-5"/>
@@ -32,43 +32,49 @@ export function createApp(): HTMLElement {
               </svg>
               Assemble
             </button>
-            <button class="btn btn-success" id="runBtn" disabled>
+            <button class="btn btn-success" id="runBtn" disabled title="Run continuously, executing full instructions">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               Run
             </button>
-            <button class="btn btn-warning" id="stepBtn" disabled>
+            <button class="btn btn-micro" id="runMicroBtn" disabled title="Run continuously, showing each micro-phase (fetch/decode/execute/writeback)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                <polygon points="5 3 19 12 5 21 5 3"/>
+              </svg>
+              Run Micro
+            </button>
+            <button class="btn btn-warning" id="stepBtn" disabled title="Execute one full instruction">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="12 5 19 12 12 19"/>
               </svg>
               Step
             </button>
-            <button class="btn btn-micro" id="microStepBtn" disabled>
+            <button class="btn btn-cyan" id="microStepBtn" disabled title="Execute one micro-phase at a time">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"/>
                 <line x1="15" y1="12" x2="20" y2="12"/>
               </svg>
-              Micro
+              Micro Step
             </button>
-            <button class="btn btn-danger" id="stopBtn" disabled>
+            <button class="btn btn-danger" id="stopBtn" disabled title="Pause execution">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                 <rect x="4" y="4" width="16" height="16" rx="2"/>
               </svg>
               Stop
             </button>
-            <button class="btn btn-secondary" id="resetBtn">
+            <button class="btn btn-secondary" id="resetBtn" title="Reset CPU, GPU, and all registers to initial state">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M2.5 2v6h6"/>
                 <path d="M2.5 8a10 10 0 1 1 2.5 8"/>
               </svg>
               Reset
             </button>
-            <div class="speed-control">
+            <div class="speed-control" title="Adjust execution speed (10s slow to 10ms fast)">
               <label>Speed:</label>
-              <input type="range" id="speedSlider" min="1" max="200" value="100">
-              <span id="speedValue">500ms</span>
+              <input type="range" id="speedSlider" min="0" max="200" value="100">
+              <span id="speedValue">100ms</span>
             </div>
           </div>
         </section>

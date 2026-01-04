@@ -267,6 +267,16 @@ body {
   box-shadow: 0 2px 8px rgba(187, 154, 247, 0.4);
 }
 
+.btn-cyan {
+  background: var(--accent-cyan);
+  color: var(--bg-primary);
+}
+
+.btn-cyan:hover {
+  background: #9dd8ff;
+  box-shadow: 0 2px 8px rgba(125, 207, 255, 0.4);
+}
+
 .btn:disabled {
   opacity: 0.4;
   cursor: not-allowed;
