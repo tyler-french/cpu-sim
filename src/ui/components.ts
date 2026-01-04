@@ -4,186 +4,189 @@ import { GPUState, GPUMicroOp, GPUMicroStage, GPU_CORE_COUNT } from '../gpu/type
 export function createApp(): HTMLElement {
   const app = document.createElement('div');
   app.className = 'app';
+  app.setAttribute('role', 'application');
+  app.setAttribute('aria-label', 'CPU and GPU Simulator');
   app.innerHTML = `
-    <header class="header">
+    <a href="#editorContainer" class="skip-link">Skip to editor</a>
+    <header class="header" role="banner">
       <h1>CPU & GPU Simulator</h1>
-      <p>Write assembly code and watch it execute step by step <a href="about.html" class="about-link">Learn more</a></p>
+      <p>Write assembly code and watch it execute step by step <a href="about.html" class="about-link" aria-label="Learn more about the simulator">Learn more</a></p>
     </header>
 
-    <main class="main-grid">
+    <main class="main-grid" role="main">
       <div class="left-column">
-        <section class="panel editor-panel">
+        <section class="panel editor-panel" aria-labelledby="editorHeading">
           <div class="panel-header">
-            <span>Assembly Editor</span>
+            <span id="editorHeading">Assembly Editor</span>
             <div class="header-controls">
-              <select id="exampleSelect" class="example-dropdown">
+              <select id="exampleSelect" class="example-dropdown" aria-label="Load example program">
                 <option value="">Load Example...</option>
               </select>
-              <span class="line-count" id="lineCount">0 lines</span>
-              <button class="expand-btn" id="expandEditor" title="Toggle editor size">⤢</button>
+              <span class="line-count" id="lineCount" aria-live="polite">0 lines</span>
+              <button class="expand-btn" id="expandEditor" title="Toggle editor size" aria-label="Expand editor fullscreen" aria-expanded="false">⤢</button>
             </div>
           </div>
-          <div class="editor-container" id="editorContainer">
-            <button class="editor-close-btn" id="editorCloseBtn" title="Close">✕</button>
+          <div class="editor-container" id="editorContainer" role="textbox" aria-label="Assembly code editor" aria-multiline="true">
+            <button class="editor-close-btn" id="editorCloseBtn" title="Close" aria-label="Close expanded editor">✕</button>
           </div>
-          <div class="editor-overlay" id="editorOverlay"></div>
-          <div class="controls">
-            <button class="btn btn-primary" id="assembleBtn" title="Parse assembly code and prepare for execution">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <div class="editor-overlay" id="editorOverlay" aria-hidden="true"></div>
+          <div class="controls" role="toolbar" aria-label="Simulator controls">
+            <button class="btn btn-primary" id="assembleBtn" title="Parse assembly code and prepare for execution" aria-label="Assemble code">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
                 <path d="M2 17l10 5 10-5"/>
                 <path d="M2 12l10 5 10-5"/>
               </svg>
               Assemble
             </button>
-            <button class="btn btn-success" id="runBtn" disabled title="Run continuously, executing full instructions">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <button class="btn btn-success" id="runBtn" disabled title="Run continuously, executing full instructions" aria-label="Run program">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               Run
             </button>
-            <button class="btn btn-micro" id="runMicroBtn" disabled title="Run continuously, showing each micro-phase (fetch/decode/execute/writeback)">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <button class="btn btn-micro" id="runMicroBtn" disabled title="Run continuously, showing each micro-phase (fetch/decode/execute/writeback)" aria-label="Run with micro-step visualization">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <polygon points="5 3 19 12 5 21 5 3"/>
               </svg>
               Run Micro
             </button>
-            <button class="btn btn-warning" id="stepBtn" disabled title="Execute one full instruction">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="btn btn-warning" id="stepBtn" disabled title="Execute one full instruction" aria-label="Execute single instruction">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <line x1="5" y1="12" x2="19" y2="12"/>
                 <polyline points="12 5 19 12 12 19"/>
               </svg>
               Step
             </button>
-            <button class="btn btn-cyan" id="microStepBtn" disabled title="Execute one micro-phase at a time">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="btn btn-cyan" id="microStepBtn" disabled title="Execute one micro-phase at a time" aria-label="Execute single micro-operation">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <circle cx="12" cy="12" r="3"/>
                 <line x1="15" y1="12" x2="20" y2="12"/>
               </svg>
               Micro Step
             </button>
-            <button class="btn btn-danger" id="stopBtn" disabled title="Pause execution">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <button class="btn btn-danger" id="stopBtn" disabled title="Pause execution" aria-label="Stop execution">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                 <rect x="4" y="4" width="16" height="16" rx="2"/>
               </svg>
               Stop
             </button>
-            <button class="btn btn-secondary" id="resetBtn" title="Reset CPU, GPU, and all registers to initial state">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <button class="btn btn-secondary" id="resetBtn" title="Reset CPU, GPU, and all registers to initial state" aria-label="Reset simulator">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M2.5 2v6h6"/>
                 <path d="M2.5 8a10 10 0 1 1 2.5 8"/>
               </svg>
               Reset
             </button>
-            <div class="speed-control" title="Adjust execution speed (10s slow to 10ms fast)">
-              <label>Speed:</label>
-              <input type="range" id="speedSlider" min="0" max="200" value="100">
-              <span id="speedValue">100ms</span>
+            <div class="speed-control" role="group" aria-labelledby="speedLabel">
+              <label id="speedLabel" for="speedSlider">Speed:</label>
+              <input type="range" id="speedSlider" min="0" max="200" value="100" aria-label="Execution speed" aria-valuemin="0" aria-valuemax="200" aria-valuenow="100">
+              <span id="speedValue" aria-live="polite">100ms</span>
             </div>
           </div>
         </section>
 
         <!-- CPU Architecture Visualization -->
-        <section class="panel cpu-arch-panel">
+        <section class="panel cpu-arch-panel" aria-labelledby="cpuArchHeading">
           <div class="panel-header">
-            <span>CPU Architecture</span>
-            <span class="cycle-indicator" id="cycleIndicator">IDLE</span>
+            <span id="cpuArchHeading">CPU Architecture</span>
+            <span class="cycle-indicator" id="cycleIndicator" role="status" aria-live="polite" aria-label="Current pipeline stage">IDLE</span>
           </div>
           <div class="panel-content">
-            <div class="cpu-architecture">
+            <div class="cpu-architecture" role="img" aria-label="CPU architecture visualization showing pipeline stages and components">
               <!-- Pipeline Stages -->
-              <div class="pipeline-stages">
-                <div class="pipeline-stage" id="stage-fetch" data-stage="fetch">
+              <div class="pipeline-stages" role="list" aria-label="CPU pipeline stages">
+                <div class="pipeline-stage" id="stage-fetch" data-stage="fetch" role="listitem" aria-label="Fetch stage: Get instruction from memory">
                   <div class="stage-label">FETCH</div>
                   <div class="stage-description">Get instruction from memory</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="stage-decode" data-stage="decode">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="stage-decode" data-stage="decode" role="listitem" aria-label="Decode stage: Parse instruction">
                   <div class="stage-label">DECODE</div>
                   <div class="stage-description">Parse instruction</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="stage-execute" data-stage="execute">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="stage-execute" data-stage="execute" role="listitem" aria-label="Execute stage: Perform operation">
                   <div class="stage-label">EXECUTE</div>
                   <div class="stage-description">Perform operation</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="stage-writeback" data-stage="writeback">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="stage-writeback" data-stage="writeback" role="listitem" aria-label="Writeback stage: Store results">
                   <div class="stage-label">WRITEBACK</div>
                   <div class="stage-description">Store results</div>
                 </div>
               </div>
 
               <!-- CPU Internals -->
-              <div class="cpu-internals">
-                <div class="cpu-component control-unit">
+              <div class="cpu-internals" role="group" aria-label="CPU internal components">
+                <div class="cpu-component control-unit" role="region" aria-label="Control Unit">
                   <div class="component-header">Control Unit</div>
                   <div class="component-content">
                     <div class="cu-field">
-                      <span class="field-label">IR:</span>
-                      <span class="field-value" id="irValue">-</span>
+                      <span class="field-label" id="irLabel">IR:</span>
+                      <span class="field-value" id="irValue" aria-labelledby="irLabel" aria-live="polite">-</span>
                     </div>
                     <div class="cu-field">
-                      <span class="field-label">Opcode:</span>
-                      <span class="field-value" id="opcodeValue">-</span>
+                      <span class="field-label" id="opcodeLabel">Opcode:</span>
+                      <span class="field-value" id="opcodeValue" aria-labelledby="opcodeLabel" aria-live="polite">-</span>
                     </div>
                   </div>
                 </div>
 
-                <div class="data-bus bus-to-alu" id="busToAlu">
+                <div class="data-bus bus-to-alu" id="busToAlu" aria-hidden="true">
                   <div class="bus-data" id="busToAluData"></div>
                 </div>
 
-                <div class="cpu-component alu">
+                <div class="cpu-component alu" role="region" aria-label="Arithmetic Logic Unit">
                   <div class="component-header">ALU</div>
                   <div class="component-content">
                     <div class="alu-inputs">
                       <div class="alu-input">
-                        <span class="input-label">A:</span>
-                        <span class="input-value" id="aluA">-</span>
+                        <span class="input-label" id="aluALabel">A:</span>
+                        <span class="input-value" id="aluA" aria-labelledby="aluALabel" aria-live="polite">-</span>
                       </div>
-                      <div class="alu-op" id="aluOp">-</div>
+                      <div class="alu-op" id="aluOp" aria-label="ALU operation">-</div>
                       <div class="alu-input">
-                        <span class="input-label">B:</span>
-                        <span class="input-value" id="aluB">-</span>
+                        <span class="input-label" id="aluBLabel">B:</span>
+                        <span class="input-value" id="aluB" aria-labelledby="aluBLabel" aria-live="polite">-</span>
                       </div>
                     </div>
                     <div class="alu-output">
-                      <span class="output-label">Result:</span>
-                      <span class="output-value" id="aluResult">-</span>
+                      <span class="output-label" id="aluResultLabel">Result:</span>
+                      <span class="output-value" id="aluResult" aria-labelledby="aluResultLabel" aria-live="polite">-</span>
                     </div>
                   </div>
                 </div>
 
-                <div class="data-bus bus-from-alu" id="busFromAlu">
+                <div class="data-bus bus-from-alu" id="busFromAlu" aria-hidden="true">
                   <div class="bus-data" id="busFromAluData"></div>
                 </div>
 
-                <div class="cpu-component memory-interface">
+                <div class="cpu-component memory-interface" role="region" aria-label="Memory Interface">
                   <div class="component-header">Memory Interface</div>
                   <div class="component-content">
                     <div class="mem-field">
-                      <span class="field-label">MAR:</span>
-                      <span class="field-value" id="marValue">-</span>
+                      <span class="field-label" id="marLabel">MAR:</span>
+                      <span class="field-value" id="marValue" aria-labelledby="marLabel" aria-live="polite">-</span>
                     </div>
                     <div class="mem-field">
-                      <span class="field-label">MDR:</span>
-                      <span class="field-value" id="mdrValue">-</span>
+                      <span class="field-label" id="mdrLabel">MDR:</span>
+                      <span class="field-value" id="mdrValue" aria-labelledby="mdrLabel" aria-live="polite">-</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               <!-- Current Micro-Operation -->
-              <div class="micro-op-display">
-                <div class="micro-op-header">Current Micro-Operation</div>
-                <div class="micro-op-content" id="microOpContent">
+              <div class="micro-op-display" role="region" aria-label="Current micro-operation">
+                <div class="micro-op-header" id="microOpHeader">Current Micro-Operation</div>
+                <div class="micro-op-content" id="microOpContent" aria-labelledby="microOpHeader" aria-live="polite">
                   <div class="micro-op-idle">Waiting for execution...</div>
                 </div>
               </div>
 
               <!-- Data Flow Log -->
-              <div class="data-flow-log">
+              <div class="data-flow-log" role="log" aria-label="CPU data flow log" aria-live="polite">
                 <div class="flow-log-header">Data Flow</div>
                 <div class="flow-log-content" id="flowLogContent"></div>
               </div>
@@ -192,56 +195,56 @@ export function createApp(): HTMLElement {
         </section>
 
         <!-- GPU Architecture Visualization -->
-        <section class="panel gpu-panel">
+        <section class="panel gpu-panel" aria-labelledby="gpuArchHeading">
           <div class="panel-header">
-            <span>GPU Architecture</span>
-            <span class="gpu-status" id="gpuStatus">IDLE</span>
+            <span id="gpuArchHeading">GPU Architecture</span>
+            <span class="gpu-status" id="gpuStatus" role="status" aria-live="polite" aria-label="GPU status">IDLE</span>
           </div>
           <div class="panel-content">
-            <div class="gpu-architecture">
+            <div class="gpu-architecture" role="img" aria-label="GPU architecture visualization showing pipeline and processing cores">
               <!-- GPU Pipeline Stages -->
-              <div class="pipeline-stages gpu-pipeline">
-                <div class="pipeline-stage" id="gpu-stage-decode" data-stage="decode">
+              <div class="pipeline-stages gpu-pipeline" role="list" aria-label="GPU pipeline stages">
+                <div class="pipeline-stage" id="gpu-stage-decode" data-stage="decode" role="listitem" aria-label="Decode stage: Parse command">
                   <div class="stage-label">DECODE</div>
                   <div class="stage-description">Parse command</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="gpu-stage-fetch" data-stage="fetch">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="gpu-stage-fetch" data-stage="fetch" role="listitem" aria-label="Fetch stage: Load VRAM">
                   <div class="stage-label">FETCH</div>
                   <div class="stage-description">Load VRAM</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="gpu-stage-execute" data-stage="execute">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="gpu-stage-execute" data-stage="execute" role="listitem" aria-label="Execute stage: Parallel compute">
                   <div class="stage-label">EXECUTE</div>
                   <div class="stage-description">Parallel compute</div>
                 </div>
-                <div class="pipeline-arrow">→</div>
-                <div class="pipeline-stage" id="gpu-stage-writeback" data-stage="writeback">
+                <div class="pipeline-arrow" aria-hidden="true">→</div>
+                <div class="pipeline-stage" id="gpu-stage-writeback" data-stage="writeback" role="listitem" aria-label="Writeback stage: Store VRAM">
                   <div class="stage-label">WRITEBACK</div>
                   <div class="stage-description">Store VRAM</div>
                 </div>
               </div>
 
               <!-- GPU Micro-Operation Display -->
-              <div class="micro-op-display gpu-micro-op">
-                <div class="micro-op-header">Current GPU Micro-Operation</div>
-                <div class="micro-op-content" id="gpuMicroOpContent">
+              <div class="micro-op-display gpu-micro-op" role="region" aria-label="Current GPU micro-operation">
+                <div class="micro-op-header" id="gpuMicroOpHeader">Current GPU Micro-Operation</div>
+                <div class="micro-op-content" id="gpuMicroOpContent" aria-labelledby="gpuMicroOpHeader" aria-live="polite">
                   <div class="micro-op-idle">Waiting for GPU command...</div>
                 </div>
               </div>
 
               <!-- GPU Cores Grid -->
-              <div class="gpu-cores-section">
-                <div class="gpu-section-header">Processing Cores (${GPU_CORE_COUNT} parallel units)</div>
-                <div class="gpu-cores-grid" id="gpuCores">
+              <div class="gpu-cores-section" role="region" aria-label="GPU processing cores">
+                <div class="gpu-section-header" id="gpuCoresHeader">Processing Cores (${GPU_CORE_COUNT} parallel units)</div>
+                <div class="gpu-cores-grid" id="gpuCores" role="list" aria-labelledby="gpuCoresHeader">
                   ${Array.from({ length: GPU_CORE_COUNT }, (_, i) => `
-                    <div class="gpu-core" id="gpuCore${i}" data-core="${i}">
+                    <div class="gpu-core" id="gpuCore${i}" data-core="${i}" role="listitem" aria-label="GPU Core ${i}">
                       <div class="core-header">Core ${i}</div>
                       <div class="core-content">
                         <div class="core-io">
-                          <span class="core-input" id="coreIn${i}">-</span>
-                          <span class="core-op" id="coreOp${i}">-</span>
-                          <span class="core-output" id="coreOut${i}">-</span>
+                          <span class="core-input" id="coreIn${i}" aria-label="Core ${i} input">-</span>
+                          <span class="core-op" id="coreOp${i}" aria-label="Core ${i} operation">-</span>
+                          <span class="core-output" id="coreOut${i}" aria-label="Core ${i} output">-</span>
                         </div>
                       </div>
                     </div>
@@ -250,7 +253,7 @@ export function createApp(): HTMLElement {
               </div>
 
               <!-- GPU-CPU Data Bus -->
-              <div class="gpu-bus-section">
+              <div class="gpu-bus-section" aria-hidden="true">
                 <div class="gpu-bus" id="gpuBus">
                   <div class="bus-label">CPU ↔ GPU Data Bus</div>
                   <div class="bus-activity" id="gpuBusActivity"></div>
@@ -258,7 +261,7 @@ export function createApp(): HTMLElement {
               </div>
 
               <!-- GPU Data Flow Log -->
-              <div class="data-flow-log gpu-flow-log">
+              <div class="data-flow-log gpu-flow-log" role="log" aria-label="GPU data flow log" aria-live="polite">
                 <div class="flow-log-header">GPU Data Flow</div>
                 <div class="flow-log-content" id="gpuFlowLogContent"></div>
               </div>
@@ -266,96 +269,96 @@ export function createApp(): HTMLElement {
           </div>
         </section>
 
-        <section class="panel console-panel">
-          <div class="panel-header">Console Output</div>
+        <section class="panel console-panel" aria-labelledby="consoleHeading">
+          <div class="panel-header" id="consoleHeading">Console Output</div>
           <div class="panel-content">
-            <div class="console" id="console"></div>
+            <div class="console" id="console" role="log" aria-label="Console output" aria-live="polite"></div>
           </div>
         </section>
 
       </div>
 
-      <aside class="sidebar">
-        <section class="panel cpu-panel">
-          <div class="panel-header">Registers</div>
+      <aside class="sidebar" role="complementary" aria-label="CPU state and reference">
+        <section class="panel cpu-panel" aria-labelledby="registersHeading">
+          <div class="panel-header" id="registersHeading">Registers</div>
           <div class="panel-content">
-            <div class="current-instruction-wrapper">
-              <div class="current-instruction-label">Current Instruction</div>
-              <div class="current-instruction" id="currentInstruction">-</div>
+            <div class="current-instruction-wrapper" role="region" aria-label="Current instruction">
+              <div class="current-instruction-label" id="currentInstrLabel">Current Instruction</div>
+              <div class="current-instruction" id="currentInstruction" aria-labelledby="currentInstrLabel" aria-live="polite">-</div>
             </div>
 
-            <div class="registers-grid" id="registers"></div>
+            <div class="registers-grid" id="registers" role="list" aria-label="CPU registers"></div>
 
-            <div class="special-registers">
+            <div class="special-registers" role="group" aria-label="Special registers">
               <div class="special-register">
-                <span class="special-register-name">Program Counter (PC)</span>
-                <span class="special-register-value" id="pcValue">0x0000</span>
+                <span class="special-register-name" id="pcLabel">Program Counter (PC)</span>
+                <span class="special-register-value" id="pcValue" aria-labelledby="pcLabel" aria-live="polite">0x0000</span>
               </div>
               <div class="special-register">
-                <span class="special-register-name">Stack Pointer (SP)</span>
-                <span class="special-register-value" id="spValue">0x00FF</span>
+                <span class="special-register-name" id="spLabel">Stack Pointer (SP)</span>
+                <span class="special-register-value" id="spValue" aria-labelledby="spLabel" aria-live="polite">0x00FF</span>
               </div>
               <div class="special-register">
-                <span class="special-register-name">Cycle Count</span>
-                <span class="special-register-value" id="cycleCount">0</span>
+                <span class="special-register-name" id="cycleLabel">Cycle Count</span>
+                <span class="special-register-value" id="cycleCount" aria-labelledby="cycleLabel" aria-live="polite">0</span>
               </div>
             </div>
 
-            <div class="flags-container">
-              <div class="flag">
-                <div class="flag-indicator" id="flagZ"></div>
+            <div class="flags-container" role="group" aria-label="CPU flags">
+              <div class="flag" role="status">
+                <div class="flag-indicator" id="flagZ" role="img" aria-label="Zero flag indicator"></div>
                 <span class="flag-name">Zero (Z)</span>
               </div>
-              <div class="flag">
-                <div class="flag-indicator" id="flagN"></div>
+              <div class="flag" role="status">
+                <div class="flag-indicator" id="flagN" role="img" aria-label="Negative flag indicator"></div>
                 <span class="flag-name">Negative (N)</span>
               </div>
-              <div class="flag">
-                <div class="flag-indicator" id="flagC"></div>
+              <div class="flag" role="status">
+                <div class="flag-indicator" id="flagC" role="img" aria-label="Carry flag indicator"></div>
                 <span class="flag-name">Carry (C)</span>
               </div>
             </div>
           </div>
         </section>
 
-        <section class="panel memory-panel">
+        <section class="panel memory-panel" aria-labelledby="memoryHeading">
           <div class="panel-header">
-            <span>Memory</span>
-            <span class="memory-range">0x00 - 0x3F</span>
+            <span id="memoryHeading">Memory</span>
+            <span class="memory-range" aria-label="Memory address range">0x00 - 0x3F</span>
           </div>
           <div class="panel-content">
-            <div class="memory-grid" id="memoryView"></div>
+            <div class="memory-grid" id="memoryView" role="grid" aria-label="CPU memory contents"></div>
           </div>
         </section>
 
-        <section class="panel vram-panel">
+        <section class="panel vram-panel" aria-labelledby="vramHeading">
           <div class="panel-header">
-            <span>VRAM</span>
-            <span class="memory-range">0x00 - 0x1F</span>
+            <span id="vramHeading">VRAM</span>
+            <span class="memory-range" aria-label="VRAM address range">0x00 - 0x1F</span>
           </div>
           <div class="panel-content">
-            <div class="vram-grid" id="vramView"></div>
+            <div class="vram-grid" id="vramView" role="grid" aria-label="GPU video memory contents"></div>
           </div>
         </section>
 
-        <section class="panel reference-panel">
+        <section class="panel reference-panel" aria-labelledby="refHeading">
           <div class="panel-header">
-            <span>Instruction Reference</span>
+            <span id="refHeading">Instruction Reference</span>
           </div>
           <div class="panel-content">
-            <div class="instruction-ref" id="instructionRef"></div>
+            <div class="instruction-ref" id="instructionRef" role="list" aria-label="Assembly instruction reference"></div>
           </div>
         </section>
       </aside>
     </main>
 
-    <footer class="status-bar">
-      <div class="status-item">
-        <div class="status-dot" id="statusDot"></div>
-        <span id="statusText">Ready</span>
+    <footer class="status-bar" role="contentinfo">
+      <div class="status-item" role="status" aria-live="polite">
+        <div class="status-dot" id="statusDot" role="img" aria-hidden="true"></div>
+        <span id="statusText" aria-label="Simulator status">Ready</span>
       </div>
       <div class="status-item">
-        <span>Instructions: <strong id="instructionCount">0</strong></span>
+        <span>Instructions: <strong id="instructionCount" aria-label="Number of instructions loaded">0</strong></span>
       </div>
       <div class="status-item copyright">
         <span>&copy; 2026 Tyler French. All rights reserved.</span>
@@ -370,9 +373,9 @@ export function initRegistersDisplay(container: HTMLElement): void {
   let html = '';
   for (let i = 0; i < REGISTER_COUNT; i++) {
     html += `
-      <div class="register" data-reg="${i}">
-        <span class="register-name">R${i}</span>
-        <span class="register-value">0x0000</span>
+      <div class="register" data-reg="${i}" role="listitem" aria-label="Register ${i}">
+        <span class="register-name" id="regName${i}">R${i}</span>
+        <span class="register-value" aria-labelledby="regName${i}">0x0000</span>
       </div>
     `;
   }
@@ -382,7 +385,8 @@ export function initRegistersDisplay(container: HTMLElement): void {
 export function initMemoryDisplay(container: HTMLElement): void {
   let html = '';
   for (let i = 0; i < 64; i++) {
-    html += `<div class="memory-cell" data-addr="${i}">00</div>`;
+    const addr = '0x' + i.toString(16).toUpperCase().padStart(2, '0');
+    html += `<div class="memory-cell" data-addr="${i}" role="gridcell" aria-label="Memory address ${addr}">00</div>`;
   }
   container.innerHTML = html;
 }
@@ -416,7 +420,7 @@ export function initInstructionReference(container: HTMLElement): void {
   container.innerHTML = instructions
     .map(
       ([name, desc]) => `
-      <div class="instruction-item">
+      <div class="instruction-item" role="listitem" aria-label="${name}: ${desc}">
         <span class="instruction-name">${name}</span>
         <span class="instruction-desc">${desc}</span>
       </div>
@@ -718,7 +722,8 @@ export function setStatus(status: 'ready' | 'running' | 'paused' | 'halted'): vo
 export function initVRAMDisplay(container: HTMLElement): void {
   let html = '';
   for (let i = 0; i < 32; i++) {
-    html += `<div class="vram-cell" data-addr="${i}">00</div>`;
+    const addr = '0x' + i.toString(16).toUpperCase().padStart(2, '0');
+    html += `<div class="vram-cell" data-addr="${i}" role="gridcell" aria-label="VRAM address ${addr}">00</div>`;
   }
   container.innerHTML = html;
 }

@@ -207,6 +207,8 @@ class Simulator {
         editorOverlay.classList.toggle('active', isExpanded);
         expandBtn.textContent = isExpanded ? '✕' : '⤢';
         expandBtn.title = isExpanded ? 'Close expanded editor' : 'Expand editor fullscreen';
+        expandBtn.setAttribute('aria-expanded', isExpanded.toString());
+        expandBtn.setAttribute('aria-label', isExpanded ? 'Close expanded editor' : 'Expand editor fullscreen');
       }
     };
 
