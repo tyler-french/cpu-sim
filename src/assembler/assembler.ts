@@ -40,6 +40,7 @@ export class Assembler {
     const lines = code.split('\n');
     const instructions: string[] = [];
     const labels: Record<string, number> = {};
+    const sourceMap: number[] = [];
     const errors: AssemblyError[] = [];
 
     // First pass: collect labels and clean instructions
@@ -123,6 +124,7 @@ export class Assembler {
       }
 
       instructions.push(content);
+      sourceMap.push(line);
     }
 
     if (errors.length > 0) {
@@ -131,7 +133,7 @@ export class Assembler {
 
     return {
       success: true,
-      program: { instructions, labels },
+      program: { instructions, labels, sourceMap },
       errors: [],
     };
   }

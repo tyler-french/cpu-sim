@@ -2,7 +2,7 @@ import './style.css';
 import { CPU } from './cpu/cpu';
 import { GPU } from './gpu/gpu';
 import { Assembler } from './assembler/assembler';
-import { createEditor, setEditorContent } from './editor/setup';
+import { createEditor, setEditorContent, highlightLine } from './editor/setup';
 import { examples } from './examples/programs';
 import {
   createApp,
@@ -35,6 +35,7 @@ class Simulator {
   private running = false;
   private runInterval: number | null = null;
   private speed = 500; // Default 500ms for slower visualization
+  private sourceMap: number[] = []; // Maps instruction index to source line
 
   // DOM Elements
   private consoleEl!: HTMLElement;
@@ -75,7 +76,7 @@ class Simulator {
     initMemoryDisplay(this.memoryEl);
     initVRAMDisplay(this.vramEl);
     initInstructionReference(document.getElementById('instructionRef')!);
-    this.initExamplesGrid();
+    this.initExamplesDropdown();
 
     // Initialize editor
     const editorContainer = document.getElementById('editorContainer')!;
@@ -94,6 +95,10 @@ class Simulator {
             updatePipelineStage(event.microOp.stage);
             updateMicroOpDisplay(event.microOp, event.state);
             addFlowLogEntry(event.microOp);
+            // Highlight line on fetch stage
+            if (event.microOp.stage === 'fetch') {
+              this.highlightCurrentLine();
+            }
           }
           break;
         case 'step':
@@ -102,17 +107,20 @@ class Simulator {
           updateFlagsDisplay(event.state);
           updateSpecialRegisters(event.state);
           this.updateCurrentInstruction();
+          this.highlightCurrentLine();
           updatePipelineStage('idle');
           break;
         case 'halt':
           this.stop();
           log(this.consoleEl, 'Program halted', 'info');
           setStatus('halted');
+          if (this.editor) highlightLine(this.editor, null);
           break;
         case 'error':
           this.stop();
           log(this.consoleEl, `Error: ${event.error}`, 'error');
           setStatus('halted');
+          if (this.editor) highlightLine(this.editor, null);
           break;
         case 'reset':
           updateRegistersDisplay(this.registersEl, event.state);
@@ -121,6 +129,7 @@ class Simulator {
           updateSpecialRegisters(event.state);
           this.currentInstructionEl.textContent = '-';
           resetCpuArchDisplay();
+          if (this.editor) highlightLine(this.editor, null);
           break;
       }
     });
@@ -192,30 +201,40 @@ class Simulator {
     this.speedValue.textContent = `${this.speed}ms`;
   }
 
-  private initExamplesGrid(): void {
-    const grid = document.getElementById('examplesGrid')!;
-    grid.innerHTML = examples
-      .map(
-        (ex) => `
-        <button class="example-btn" data-example="${ex.id}">
-          <div class="example-title">${ex.title}</div>
-          <div class="example-desc">${ex.description}</div>
-        </button>
-      `
-      )
-      .join('');
+  private initExamplesDropdown(): void {
+    const select = document.getElementById('exampleSelect') as HTMLSelectElement;
 
-    grid.addEventListener('click', (e) => {
-      const btn = (e.target as HTMLElement).closest('.example-btn');
-      if (btn instanceof HTMLElement) {
-        const exampleId = btn.dataset.example;
-        const example = examples.find((ex) => ex.id === exampleId);
-        if (example && this.editor) {
-          setEditorContent(this.editor, example.code);
-          this.updateLineCount(example.code);
-          this.reset();
-          log(this.consoleEl, `Loaded example: ${example.title}`, 'info');
-        }
+    // Group examples: CPU examples first, then GPU examples
+    const cpuExamples = examples.filter(ex => !ex.id.startsWith('gpu'));
+    const gpuExamples = examples.filter(ex => ex.id.startsWith('gpu'));
+
+    let html = '<option value="">Load Example...</option>';
+
+    html += '<optgroup label="CPU Examples">';
+    cpuExamples.forEach(ex => {
+      html += `<option value="${ex.id}">${ex.title}</option>`;
+    });
+    html += '</optgroup>';
+
+    html += '<optgroup label="GPU Examples">';
+    gpuExamples.forEach(ex => {
+      html += `<option value="${ex.id}">${ex.title}</option>`;
+    });
+    html += '</optgroup>';
+
+    select.innerHTML = html;
+
+    select.addEventListener('change', () => {
+      const exampleId = select.value;
+      if (!exampleId) return;
+
+      const example = examples.find((ex) => ex.id === exampleId);
+      if (example && this.editor) {
+        setEditorContent(this.editor, example.code);
+        this.updateLineCount(example.code);
+        this.reset();
+        log(this.consoleEl, `Loaded: ${example.title}`, 'info');
+        select.value = ''; // Reset dropdown
       }
     });
   }
@@ -236,6 +255,17 @@ class Simulator {
       this.currentInstructionEl.textContent = `[${state.pc}] ${program[state.pc]}`;
     } else {
       this.currentInstructionEl.textContent = '-';
+    }
+  }
+
+  private highlightCurrentLine(): void {
+    if (!this.editor) return;
+    const state = this.cpu.getState();
+    const sourceLine = this.sourceMap[state.pc];
+    if (sourceLine !== undefined) {
+      highlightLine(this.editor, sourceLine);
+    } else {
+      highlightLine(this.editor, null);
     }
   }
 
@@ -261,6 +291,7 @@ class Simulator {
     }
 
     this.cpu.loadProgram(result.program);
+    this.sourceMap = result.program.sourceMap;
     log(this.consoleEl, `Assembled ${result.program.instructions.length} instruction(s)`, 'success');
     this.instructionCountEl.textContent = result.program.instructions.length.toString();
 
@@ -269,6 +300,7 @@ class Simulator {
     this.microStepBtn.disabled = false;
     setStatus('ready');
     this.updateCurrentInstruction();
+    this.highlightCurrentLine();
   }
 
   private run(): void {
@@ -319,6 +351,7 @@ class Simulator {
     this.cpu.reset();
     this.gpu.reset();
     resetGPUDisplay();
+    this.sourceMap = [];
     this.runBtn.disabled = true;
     this.stepBtn.disabled = true;
     this.microStepBtn.disabled = true;

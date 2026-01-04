@@ -15,7 +15,12 @@ export function createApp(): HTMLElement {
         <section class="panel editor-panel">
           <div class="panel-header">
             <span>Assembly Editor</span>
-            <span class="line-count" id="lineCount">0 lines</span>
+            <div class="header-controls">
+              <select id="exampleSelect" class="example-dropdown">
+                <option value="">Load Example...</option>
+              </select>
+              <span class="line-count" id="lineCount">0 lines</span>
+            </div>
           </div>
           <div class="editor-container" id="editorContainer"></div>
           <div class="controls">
@@ -238,12 +243,6 @@ export function createApp(): HTMLElement {
           </div>
         </section>
 
-        <section class="panel examples-panel">
-          <div class="panel-header">Example Programs</div>
-          <div class="panel-content">
-            <div class="examples-grid" id="examplesGrid"></div>
-          </div>
-        </section>
       </div>
 
       <aside class="sidebar">

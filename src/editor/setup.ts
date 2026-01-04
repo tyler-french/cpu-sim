@@ -1,9 +1,33 @@
-import { EditorState } from '@codemirror/state';
-import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter } from '@codemirror/view';
+import { EditorState, StateEffect, StateField } from '@codemirror/state';
+import { EditorView, keymap, lineNumbers, highlightActiveLine, highlightActiveLineGutter, Decoration, DecorationSet } from '@codemirror/view';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
 import { syntaxHighlighting, HighlightStyle } from '@codemirror/language';
 import { tags } from '@lezer/highlight';
 import { assembly } from './assembly-lang';
+
+// Effect to set the executing line
+const setExecutingLine = StateEffect.define<number | null>();
+
+// State field to track the executing line decoration
+const executingLineField = StateField.define<DecorationSet>({
+  create() {
+    return Decoration.none;
+  },
+  update(decorations, tr) {
+    for (const effect of tr.effects) {
+      if (effect.is(setExecutingLine)) {
+        if (effect.value === null) {
+          return Decoration.none;
+        }
+        const line = tr.state.doc.line(effect.value);
+        const deco = Decoration.line({ class: 'cm-executingLine' }).range(line.from);
+        return Decoration.set([deco]);
+      }
+    }
+    return decorations.map(tr.changes);
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 
 const theme = EditorView.theme({
   '&': {
@@ -24,6 +48,10 @@ const theme = EditorView.theme({
   },
   '.cm-activeLineGutter': {
     backgroundColor: '#24283b',
+  },
+  '.cm-executingLine': {
+    backgroundColor: 'rgba(158, 206, 106, 0.15)',
+    borderLeft: '3px solid #9ece6a',
   },
   '.cm-gutters': {
     backgroundColor: '#1a1b26',
@@ -78,6 +106,7 @@ export function createEditor(
       syntaxHighlighting(highlightStyles),
       theme,
       updateListener,
+      executingLineField,
       EditorView.lineWrapping,
     ],
   });
@@ -95,5 +124,15 @@ export function setEditorContent(view: EditorView, content: string): void {
       to: view.state.doc.length,
       insert: content,
     },
+  });
+}
+
+export function highlightLine(view: EditorView, lineNumber: number | null): void {
+  // lineNumber is 1-based, null clears the highlight
+  if (lineNumber !== null && (lineNumber < 1 || lineNumber > view.state.doc.lines)) {
+    return;
+  }
+  view.dispatch({
+    effects: setExecutingLine.of(lineNumber),
   });
 }

@@ -31,6 +31,7 @@ export interface CPUState {
 export interface AssembledProgram {
   instructions: string[];
   labels: Record<string, number>;
+  sourceMap: number[]; // Maps instruction index to source line number (1-based)
 }
 
 export type CPUEventType = 'step' | 'halt' | 'reset' | 'error' | 'micro';
