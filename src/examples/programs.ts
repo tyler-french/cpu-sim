@@ -452,4 +452,113 @@ GRESULT R7        ; R7 = 36
 
 HALT`,
   },
+  {
+    id: 'gpu-crossproduct',
+    title: 'GPU: Cross Product',
+    description: 'Compute cross product of 3D vectors',
+    code: `; GPU Cross Product
+; Computes A × B for 3D vectors
+;
+; Formula: A × B = (
+;   a2*b3 - a3*b2,   (x component)
+;   a3*b1 - a1*b3,   (y component)
+;   a1*b2 - a2*b1    (z component)
+; )
+;
+; A = [2, 3, 4]
+; B = [5, 6, 7]
+;
+; Cross product:
+;   x = 3*7 - 4*6 = 21 - 24 = -3
+;   y = 4*5 - 2*7 = 20 - 14 = 6
+;   z = 2*6 - 3*5 = 12 - 15 = -3
+;
+; Result: [-3, 6, -3]
+; (negative values wrap to 0xFFFD)
+
+; Store vector A at CPU[0x00]
+MOV R0, 2
+STORE 0x00, R0    ; a1 = 2
+MOV R0, 3
+STORE 0x01, R0    ; a2 = 3
+MOV R0, 4
+STORE 0x02, R0    ; a3 = 4
+
+; Store vector B at CPU[0x10]
+MOV R0, 5
+STORE 0x10, R0    ; b1 = 5
+MOV R0, 6
+STORE 0x11, R0    ; b2 = 6
+MOV R0, 7
+STORE 0x12, R0    ; b3 = 7
+
+; Arrange terms for GPU parallel multiply
+; We need: [a2,a3,a1] * [b3,b1,b2] (positive terms)
+;      and [a3,a2,a1] * [b2,b3,b1] (negative terms)
+
+; Positive terms: [a2,a3,a1] at CPU[0x20]
+LOAD R0, 0x01     ; a2 = 3
+STORE 0x20, R0
+LOAD R0, 0x02     ; a3 = 4
+STORE 0x21, R0
+LOAD R0, 0x00     ; a1 = 2
+STORE 0x22, R0
+
+; [b3,b1,b2] at CPU[0x28]
+LOAD R0, 0x12     ; b3 = 7
+STORE 0x28, R0
+LOAD R0, 0x10     ; b1 = 5
+STORE 0x29, R0
+LOAD R0, 0x11     ; b2 = 6
+STORE 0x2A, R0
+
+; Negative terms: [a3,a1,a2] at CPU[0x30]
+LOAD R0, 0x02     ; a3 = 4
+STORE 0x30, R0
+LOAD R0, 0x00     ; a1 = 2
+STORE 0x31, R0
+LOAD R0, 0x01     ; a2 = 3
+STORE 0x32, R0
+
+; [b2,b3,b1] at CPU[0x38]
+LOAD R0, 0x11     ; b2 = 6
+STORE 0x38, R0
+LOAD R0, 0x12     ; b3 = 7
+STORE 0x39, R0
+LOAD R0, 0x10     ; b1 = 5
+STORE 0x3A, R0
+
+; === GPU Parallel Operations ===
+
+; Load arrays to VRAM
+GLOAD 0, 0x20, 3   ; pos_a at VRAM[0]
+GLOAD 8, 0x28, 3   ; pos_b at VRAM[8]
+GLOAD 16, 0x30, 3  ; neg_a at VRAM[16]
+GLOAD 24, 0x38, 3  ; neg_b at VRAM[24]
+
+; Parallel multiply: pos = pos_a * pos_b
+GEXEC VMUL, 0, 8, 3
+GWAIT
+; VRAM[8] now has [21, 20, 12]
+
+; Parallel multiply: neg = neg_a * neg_b
+GEXEC VMUL, 16, 24, 3
+GWAIT
+; VRAM[24] now has [24, 14, 15]
+
+; Parallel subtract: result = pos - neg
+GEXEC VSUB, 8, 24, 3
+GWAIT
+; VRAM[24] now has [-3, 6, -3]
+
+; Transfer result back to CPU
+GSTORE 0x40, 24, 3
+
+; Load results into registers
+LOAD R5, 0x40     ; x = -3 (0xFFFD)
+LOAD R6, 0x41     ; y = 6
+LOAD R7, 0x42     ; z = -3 (0xFFFD)
+
+HALT`,
+  },
 ];

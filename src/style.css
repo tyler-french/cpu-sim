@@ -27,8 +27,8 @@ body {
   background: var(--bg-primary);
   color: var(--text-primary);
   min-height: 100vh;
-  padding: 20px;
-  line-height: 1.5;
+  padding: 12px;
+  line-height: 1.4;
 }
 
 #app {
@@ -39,20 +39,20 @@ body {
 /* Header */
 .header {
   text-align: center;
-  margin-bottom: 24px;
+  margin-bottom: 12px;
 }
 
 .header h1 {
-  font-size: 2rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: var(--accent-blue);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   letter-spacing: -0.5px;
 }
 
 .header p {
   color: var(--text-muted);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .about-link {
@@ -71,20 +71,20 @@ body {
 /* Layout */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 20px;
+  grid-template-columns: 1fr 300px;
+  gap: 12px;
 }
 
 .left-column {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 .sidebar {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 10px;
 }
 
 /* Panels */
@@ -98,9 +98,9 @@ body {
 
 .panel-header {
   background: var(--bg-tertiary);
-  padding: 12px 16px;
+  padding: 8px 12px;
   font-weight: 600;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--text-secondary);
@@ -111,7 +111,7 @@ body {
 }
 
 .panel-content {
-  padding: 16px;
+  padding: 10px;
 }
 
 /* Editor */
@@ -121,12 +121,33 @@ body {
 }
 
 .editor-container {
-  height: 380px;
+  height: 200px;
   overflow: hidden;
+  transition: height 0.3s ease;
+}
+
+.editor-container.expanded {
+  height: 400px;
 }
 
 .editor-container .cm-editor {
   height: 100%;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  opacity: 0.7;
+  transition: opacity 0.15s ease;
+}
+
+.expand-btn:hover {
+  opacity: 1;
+  color: var(--accent-blue);
 }
 
 .line-count {
@@ -302,11 +323,11 @@ body {
 /* Console */
 .console {
   background: var(--bg-primary);
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 0.85rem;
-  min-height: 100px;
-  max-height: 140px;
+  border-radius: 6px;
+  padding: 8px;
+  font-size: 0.75rem;
+  min-height: 60px;
+  max-height: 80px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
 }
@@ -511,14 +532,14 @@ body {
 
 /* Status Bar */
 .status-bar {
-  margin-top: 16px;
+  margin-top: 10px;
   display: flex;
   justify-content: space-between;
-  padding: 12px 18px;
+  padding: 8px 14px;
   background: var(--bg-secondary);
-  border-radius: 10px;
+  border-radius: 8px;
   border: 1px solid var(--border-color);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .status-item {
@@ -549,6 +570,12 @@ body {
 .status-dot.halted {
   background: var(--accent-red);
   box-shadow: 0 0 8px var(--accent-red);
+}
+
+.status-item.copyright {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 0.7rem;
 }
 
 @keyframes pulse {

@@ -19,6 +19,8 @@ import {
   addFlowLogEntry,
   resetCpuArchDisplay,
   updateGPUDisplay,
+  updateGPUMicroOpDisplay,
+  addGPUFlowLogEntry,
   animateGPUTransfer,
   resetGPUDisplay,
   log,
@@ -139,6 +141,9 @@ class Simulator {
       updateGPUDisplay(event.state);
 
       if (event.microOp) {
+        updateGPUMicroOpDisplay(event.microOp, event.state);
+        addGPUFlowLogEntry(event.microOp);
+
         if (event.type === 'transfer') {
           animateGPUTransfer(event.microOp);
         }
@@ -189,6 +194,16 @@ class Simulator {
     this.speedSlider.addEventListener('input', () => {
       this.updateSpeedDisplay();
     });
+
+    // Editor expand/collapse toggle
+    const expandBtn = document.getElementById('expandEditor');
+    const editorContainer = document.getElementById('editorContainer');
+    if (expandBtn && editorContainer) {
+      expandBtn.addEventListener('click', () => {
+        editorContainer.classList.toggle('expanded');
+        expandBtn.textContent = editorContainer.classList.contains('expanded') ? '⤡' : '⤢';
+      });
+    }
   }
 
   private updateSpeedDisplay(): void {
@@ -336,11 +351,16 @@ class Simulator {
     this.stopBtn.disabled = false;
 
     if (microMode) {
-      // Micro mode: step through each micro-operation (fetch/decode/execute/writeback)
+      // Micro mode: step through each micro-operation (CPU and GPU)
       this.runInterval = window.setInterval(() => {
-        const microOp = this.cpu.microStep();
-        if (!microOp && this.cpu.isHalted()) {
-          this.stop();
+        // First, check if GPU has pending work
+        if (this.gpu.hasPendingWork()) {
+          this.gpu.microStep();
+        } else {
+          const microOp = this.cpu.microStep();
+          if (!microOp && this.cpu.isHalted()) {
+            this.stop();
+          }
         }
       }, this.speed);
     } else {
@@ -355,12 +375,21 @@ class Simulator {
 
   private step(): void {
     if (this.cpu.isHalted()) return;
+    // Complete any pending GPU work first
+    if (this.gpu.hasPendingWork()) {
+      this.gpu.fullCycle();
+    }
     this.cpu.step();
   }
 
   private microStep(): void {
     if (this.cpu.isHalted()) return;
-    this.cpu.microStep();
+    // If GPU has pending work, step through GPU first
+    if (this.gpu.hasPendingWork()) {
+      this.gpu.microStep();
+    } else {
+      this.cpu.microStep();
+    }
   }
 
   private stop(): void {

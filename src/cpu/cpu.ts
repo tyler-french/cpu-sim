@@ -913,11 +913,9 @@ export class CPU {
         break;
       }
       case 'GWAIT': {
-        // GWAIT - Wait for GPU (in our sim, we execute all cycles immediately)
+        // GWAIT - Wait for GPU to complete current operation
         if (!this.gpu) throw new Error('GPU not available');
-        while (this.gpu.isBusy()) {
-          this.gpu.cycle();
-        }
+        this.gpu.fullCycle();
         break;
       }
       case 'GRESULT': {

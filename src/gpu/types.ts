@@ -12,6 +12,9 @@ export type GPUOperation =
   | 'VSQRT'   // Square root of each element
   | 'VCOPY';  // Copy vector
 
+// GPU pipeline stages (SIMD architecture)
+export type GPUMicroStage = 'idle' | 'decode' | 'fetch' | 'execute' | 'writeback';
+
 export interface GPUCore {
   id: number;
   busy: boolean;
@@ -26,7 +29,10 @@ export interface GPUState {
   cores: GPUCore[];         // Parallel processing cores
   busy: boolean;            // Is GPU currently executing
   currentOp: GPUOperation | null;
+  currentStage: GPUMicroStage;  // Current pipeline stage
   cyclesRemaining: number;  // Cycles until operation completes
+  currentBatch: number;     // Current batch being processed
+  totalBatches: number;     // Total batches for this operation
   srcAddr: number;          // Source address in VRAM
   dstAddr: number;          // Destination address in VRAM
   length: number;           // Vector length for current op
@@ -35,15 +41,19 @@ export interface GPUState {
 }
 
 export interface GPUMicroOp {
+  stage: GPUMicroStage;
   description: string;
   coreId?: number;
   operation?: string;
   value?: number;
   source?: string;
   destination?: string;
+  coresActive?: number[];
+  dataLoaded?: number[];    // Values loaded into cores during fetch
+  dataWritten?: number[];   // Values written during writeback
 }
 
-export type GPUEventType = 'start' | 'progress' | 'complete' | 'transfer' | 'reset';
+export type GPUEventType = 'micro' | 'complete' | 'transfer' | 'reset';
 
 export interface GPUEvent {
   type: GPUEventType;

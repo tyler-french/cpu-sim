@@ -1,5 +1,5 @@
 import { CPUState, CycleStage, MicroOp, REGISTER_COUNT } from '../cpu/types';
-import { GPUState, GPUMicroOp, GPU_CORE_COUNT } from '../gpu/types';
+import { GPUState, GPUMicroOp, GPUMicroStage, GPU_CORE_COUNT } from '../gpu/types';
 
 export function createApp(): HTMLElement {
   const app = document.createElement('div');
@@ -20,6 +20,7 @@ export function createApp(): HTMLElement {
                 <option value="">Load Example...</option>
               </select>
               <span class="line-count" id="lineCount">0 lines</span>
+              <button class="expand-btn" id="expandEditor" title="Toggle editor size">⤢</button>
             </div>
           </div>
           <div class="editor-container" id="editorContainer"></div>
@@ -187,14 +188,45 @@ export function createApp(): HTMLElement {
           </div>
         </section>
 
-        <!-- GPU Visualization -->
+        <!-- GPU Architecture Visualization -->
         <section class="panel gpu-panel">
           <div class="panel-header">
-            <span>GPU - Parallel Processing Unit</span>
+            <span>GPU Architecture</span>
             <span class="gpu-status" id="gpuStatus">IDLE</span>
           </div>
           <div class="panel-content">
             <div class="gpu-architecture">
+              <!-- GPU Pipeline Stages -->
+              <div class="pipeline-stages gpu-pipeline">
+                <div class="pipeline-stage" id="gpu-stage-decode" data-stage="decode">
+                  <div class="stage-label">DECODE</div>
+                  <div class="stage-description">Parse command</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-stage" id="gpu-stage-fetch" data-stage="fetch">
+                  <div class="stage-label">FETCH</div>
+                  <div class="stage-description">Load VRAM</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-stage" id="gpu-stage-execute" data-stage="execute">
+                  <div class="stage-label">EXECUTE</div>
+                  <div class="stage-description">Parallel compute</div>
+                </div>
+                <div class="pipeline-arrow">→</div>
+                <div class="pipeline-stage" id="gpu-stage-writeback" data-stage="writeback">
+                  <div class="stage-label">WRITEBACK</div>
+                  <div class="stage-description">Store VRAM</div>
+                </div>
+              </div>
+
+              <!-- GPU Micro-Operation Display -->
+              <div class="micro-op-display gpu-micro-op">
+                <div class="micro-op-header">Current GPU Micro-Operation</div>
+                <div class="micro-op-content" id="gpuMicroOpContent">
+                  <div class="micro-op-idle">Waiting for GPU command...</div>
+                </div>
+              </div>
+
               <!-- GPU Cores Grid -->
               <div class="gpu-cores-section">
                 <div class="gpu-section-header">Processing Cores (${GPU_CORE_COUNT} parallel units)</div>
@@ -222,21 +254,10 @@ export function createApp(): HTMLElement {
                 </div>
               </div>
 
-              <!-- VRAM Section -->
-              <div class="vram-section">
-                <div class="gpu-section-header">
-                  <span>VRAM (Video Memory)</span>
-                  <span class="vram-range">0x00 - 0x1F</span>
-                </div>
-                <div class="vram-grid" id="vramView"></div>
-              </div>
-
-              <!-- GPU Operation Status -->
-              <div class="gpu-op-status">
-                <div class="gpu-op-header">Current Operation</div>
-                <div class="gpu-op-content" id="gpuOpContent">
-                  <div class="gpu-op-idle">No GPU operation running</div>
-                </div>
+              <!-- GPU Data Flow Log -->
+              <div class="data-flow-log gpu-flow-log">
+                <div class="flow-log-header">GPU Data Flow</div>
+                <div class="flow-log-content" id="gpuFlowLogContent"></div>
               </div>
             </div>
           </div>
@@ -304,6 +325,16 @@ export function createApp(): HTMLElement {
           </div>
         </section>
 
+        <section class="panel vram-panel">
+          <div class="panel-header">
+            <span>VRAM</span>
+            <span class="memory-range">0x00 - 0x1F</span>
+          </div>
+          <div class="panel-content">
+            <div class="vram-grid" id="vramView"></div>
+          </div>
+        </section>
+
         <section class="panel reference-panel">
           <div class="panel-header">
             <span>Instruction Reference</span>
@@ -322,6 +353,9 @@ export function createApp(): HTMLElement {
       </div>
       <div class="status-item">
         <span>Instructions: <strong id="instructionCount">0</strong></span>
+      </div>
+      <div class="status-item copyright">
+        <span>&copy; 2026 Tyler French. All rights reserved.</span>
       </div>
     </footer>
   `;
@@ -728,30 +762,96 @@ export function updateGPUDisplay(state: GPUState): void {
       cell.classList.toggle('nonzero', value !== 0);
     });
   }
+}
 
-  // Update operation status
-  const opContent = document.getElementById('gpuOpContent');
-  if (opContent) {
-    if (state.busy && state.currentOp) {
-      opContent.innerHTML = `
-        <div class="gpu-op-active">
-          <div class="gpu-op-name">${state.currentOp}</div>
-          <div class="gpu-op-details">
-            <span>Source: VRAM[${state.srcAddr}]</span>
-            <span>Dest: VRAM[${state.dstAddr}]</span>
-            <span>Length: ${state.length}</span>
-          </div>
-          <div class="gpu-op-progress">
-            <div class="progress-bar">
-              <div class="progress-fill" style="width: ${100 - (state.cyclesRemaining / Math.ceil(state.length / GPU_CORE_COUNT)) * 100}%"></div>
-            </div>
-            <span>${state.cyclesRemaining} cycles left</span>
-          </div>
-        </div>
-      `;
-    } else {
-      opContent.innerHTML = '<div class="gpu-op-idle">No GPU operation running</div>';
+export function updateGPUPipelineStage(stage: GPUMicroStage): void {
+  // Clear all active stages
+  document.querySelectorAll('.gpu-pipeline .pipeline-stage').forEach((el) => {
+    el.classList.remove('active');
+  });
+
+  // Highlight current stage
+  if (stage !== 'idle') {
+    const stageEl = document.getElementById(`gpu-stage-${stage}`);
+    if (stageEl) {
+      stageEl.classList.add('active');
     }
+  }
+
+  // Update GPU status indicator
+  const gpuStatus = document.getElementById('gpuStatus');
+  if (gpuStatus && stage !== 'idle') {
+    gpuStatus.textContent = stage.toUpperCase();
+    gpuStatus.className = `gpu-status active`;
+  }
+}
+
+export function updateGPUMicroOpDisplay(microOp: GPUMicroOp | null, state: GPUState): void {
+  const content = document.getElementById('gpuMicroOpContent');
+
+  if (!microOp || microOp.stage === 'idle') {
+    if (content) {
+      content.innerHTML = '<div class="micro-op-idle">Waiting for GPU command...</div>';
+    }
+    updateGPUPipelineStage('idle');
+    return;
+  }
+
+  updateGPUPipelineStage(microOp.stage);
+
+  if (content) {
+    let detailsHtml = '';
+
+    if (microOp.coresActive && microOp.coresActive.length > 0) {
+      detailsHtml += `<div class="micro-op-flow"><span class="flow-from">Cores active:</span> <span class="flow-to">${microOp.coresActive.join(', ')}</span></div>`;
+    }
+
+    if (microOp.dataLoaded && microOp.dataLoaded.length > 0) {
+      detailsHtml += `<div class="micro-op-value">Data loaded: [${microOp.dataLoaded.slice(0, 4).join(', ')}${microOp.dataLoaded.length > 4 ? '...' : ''}]</div>`;
+    }
+
+    if (microOp.dataWritten && microOp.dataWritten.length > 0) {
+      detailsHtml += `<div class="micro-op-value">Data written: [${microOp.dataWritten.slice(0, 4).join(', ')}${microOp.dataWritten.length > 4 ? '...' : ''}]</div>`;
+    }
+
+    if (microOp.value !== undefined) {
+      detailsHtml += `<div class="micro-op-value">Result: <strong>${microOp.value}</strong></div>`;
+    }
+
+    content.innerHTML = `
+      <div class="micro-op-active">
+        <div class="micro-op-stage ${microOp.stage}">${microOp.stage.toUpperCase()}</div>
+        <div class="micro-op-desc">${microOp.description}</div>
+        ${detailsHtml}
+      </div>
+    `;
+  }
+
+  // Show batch progress if applicable
+  if (state.totalBatches > 1) {
+    const batchInfo = document.createElement('div');
+    batchInfo.className = 'micro-op-batch';
+    batchInfo.innerHTML = `Batch ${state.currentBatch}/${state.totalBatches}`;
+    content?.querySelector('.micro-op-active')?.appendChild(batchInfo);
+  }
+}
+
+export function addGPUFlowLogEntry(microOp: GPUMicroOp): void {
+  const logContent = document.getElementById('gpuFlowLogContent');
+  if (!logContent) return;
+
+  const entry = document.createElement('div');
+  entry.className = `flow-entry ${microOp.stage}`;
+  entry.innerHTML = `
+    <span class="flow-stage">${microOp.stage.charAt(0).toUpperCase()}</span>
+    <span class="flow-desc">${microOp.description}</span>
+  `;
+
+  logContent.insertBefore(entry, logContent.firstChild);
+
+  // Keep only last 8 entries
+  while (logContent.children.length > 8) {
+    logContent.removeChild(logContent.lastChild!);
   }
 }
 
@@ -778,6 +878,15 @@ export function resetGPUDisplay(): void {
     gpuStatus.className = 'gpu-status';
   }
 
+  // Reset pipeline stages
+  updateGPUPipelineStage('idle');
+
+  // Reset micro-op display
+  const microOpContent = document.getElementById('gpuMicroOpContent');
+  if (microOpContent) {
+    microOpContent.innerHTML = '<div class="micro-op-idle">Waiting for GPU command...</div>';
+  }
+
   // Reset cores
   for (let i = 0; i < GPU_CORE_COUNT; i++) {
     const coreEl = document.getElementById(`gpuCore${i}`);
@@ -801,10 +910,10 @@ export function resetGPUDisplay(): void {
     });
   }
 
-  // Reset operation status
-  const opContent = document.getElementById('gpuOpContent');
-  if (opContent) {
-    opContent.innerHTML = '<div class="gpu-op-idle">No GPU operation running</div>';
+  // Reset GPU flow log
+  const gpuFlowLog = document.getElementById('gpuFlowLogContent');
+  if (gpuFlowLog) {
+    gpuFlowLog.innerHTML = '';
   }
 }
 
