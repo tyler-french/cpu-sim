@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About - CPU & GPU Simulator</title>
+    <meta name="description" content="Learn how computers really work. Interactive CPU and GPU simulator that visualizes the fetch-decode-execute cycle, parallel processing, and assembly language execution." />
+    <meta name="keywords" content="CPU simulator, GPU simulator, assembly language, computer architecture, fetch decode execute, parallel processing, educational, learn programming" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+      :root {
+        --bg-primary: #1a1b26;
+        --bg-secondary: #24283b;
+        --bg-tertiary: #414868;
+        --text-primary: #c0caf5;
+        --text-secondary: #a9b1d6;
+        --text-muted: #565f89;
+        --accent-blue: #7aa2f7;
+        --accent-green: #9ece6a;
+        --accent-purple: #bb9af7;
+        --accent-cyan: #7dcfff;
+        --accent-orange: #ff9e64;
+        --border-color: #3b4261;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: 'JetBrains Mono', monospace;
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        line-height: 1.7;
+        min-height: 100vh;
+      }
+
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 60px 24px;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 60px;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        color: var(--accent-blue);
+        margin-bottom: 16px;
+        letter-spacing: -1px;
+      }
+
+      .tagline {
+        font-size: 1.2rem;
+        color: var(--text-secondary);
+        margin-bottom: 24px;
+      }
+
+      .cta-button {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+        color: var(--bg-primary);
+        padding: 14px 32px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 1rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 15px rgba(122, 162, 247, 0.3);
+      }
+
+      .cta-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(122, 162, 247, 0.4);
+      }
+
+      section {
+        margin-bottom: 48px;
+      }
+
+      h2 {
+        font-size: 1.4rem;
+        color: var(--accent-green);
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      h2::before {
+        content: '';
+        display: block;
+        width: 4px;
+        height: 24px;
+        background: var(--accent-green);
+        border-radius: 2px;
+      }
+
+      p {
+        color: var(--text-secondary);
+        margin-bottom: 16px;
+      }
+
+      .highlight {
+        color: var(--accent-cyan);
+        font-weight: 500;
+      }
+
+      .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 20px;
+        margin-top: 24px;
+      }
+
+      .feature-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+        transition: all 0.2s ease;
+      }
+
+      .feature-card:hover {
+        border-color: var(--accent-blue);
+        transform: translateY(-4px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      }
+
+      .feature-icon {
+        font-size: 2rem;
+        margin-bottom: 12px;
+      }
+
+      .feature-card h3 {
+        color: var(--accent-purple);
+        font-size: 1rem;
+        margin-bottom: 8px;
+      }
+
+      .feature-card p {
+        font-size: 0.85rem;
+        margin-bottom: 0;
+      }
+
+      .cycle-diagram {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 12px;
+        margin: 32px 0;
+        flex-wrap: wrap;
+      }
+
+      .cycle-step {
+        background: var(--bg-tertiary);
+        padding: 16px 24px;
+        border-radius: 8px;
+        text-align: center;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .cycle-step:nth-child(1) { border-color: var(--accent-blue); }
+      .cycle-step:nth-child(3) { border-color: var(--accent-orange); }
+      .cycle-step:nth-child(5) { border-color: var(--accent-green); }
+      .cycle-step:nth-child(7) { border-color: var(--accent-purple); }
+
+      .cycle-step .step-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        margin-bottom: 4px;
+      }
+
+      .cycle-step:nth-child(1) .step-name { color: var(--accent-blue); }
+      .cycle-step:nth-child(3) .step-name { color: var(--accent-orange); }
+      .cycle-step:nth-child(5) .step-name { color: var(--accent-green); }
+      .cycle-step:nth-child(7) .step-name { color: var(--accent-purple); }
+
+      .cycle-step .step-desc {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+      }
+
+      .cycle-arrow {
+        color: var(--text-muted);
+        font-size: 1.5rem;
+      }
+
+      .comparison {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-top: 24px;
+      }
+
+      @media (max-width: 600px) {
+        .comparison {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .comparison-card {
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .comparison-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .comparison-card.cpu h3 { color: var(--accent-blue); }
+      .comparison-card.gpu h3 { color: var(--accent-green); }
+
+      .comparison-card ul {
+        list-style: none;
+        font-size: 0.85rem;
+      }
+
+      .comparison-card li {
+        padding: 6px 0;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .comparison-card li::before {
+        content: '>';
+        color: var(--text-muted);
+        font-weight: bold;
+      }
+
+      footer {
+        text-align: center;
+        padding: 40px 0;
+        border-top: 1px solid var(--border-color);
+        margin-top: 60px;
+      }
+
+      footer p {
+        font-size: 0.85rem;
+        color: var(--text-muted);
+      }
+
+      footer a {
+        color: var(--accent-blue);
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>CPU & GPU Simulator</h1>
+        <p class="tagline">See inside the machine. Understand how computers really work.</p>
+        <a href="/" class="cta-button">Launch Simulator</a>
+      </header>
+
+      <section>
+        <h2>Why This Exists</h2>
+        <p>
+          Every time you run a program, billions of operations happen inside your computer in fractions of a second.
+          But what <span class="highlight">actually</span> happens? How does a CPU read your code?
+          How does a GPU process thousands of calculations in parallel?
+        </p>
+        <p>
+          This simulator strips away the abstraction. You'll write real assembly code and watch,
+          step by step, as the CPU fetches instructions from memory, decodes them, executes operations,
+          and writes results back. No magic. No mystery. Just the raw mechanics of computation.
+        </p>
+      </section>
+
+      <section>
+        <h2>The Fetch-Decode-Execute Cycle</h2>
+        <p>
+          Every instruction your computer runs goes through this fundamental cycle.
+          Our simulator visualizes each phase so you can see exactly what's happening inside the processor.
+        </p>
+        <div class="cycle-diagram">
+          <div class="cycle-step">
+            <div class="step-name">FETCH</div>
+            <div class="step-desc">Get instruction from memory</div>
+          </div>
+          <div class="cycle-arrow">→</div>
+          <div class="cycle-step">
+            <div class="step-name">DECODE</div>
+            <div class="step-desc">Parse the instruction</div>
+          </div>
+          <div class="cycle-arrow">→</div>
+          <div class="cycle-step">
+            <div class="step-name">EXECUTE</div>
+            <div class="step-desc">Perform the operation</div>
+          </div>
+          <div class="cycle-arrow">→</div>
+          <div class="cycle-step">
+            <div class="step-name">WRITEBACK</div>
+            <div class="step-desc">Store the results</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>CPU vs GPU: Different Tools, Different Jobs</h2>
+        <p>
+          CPUs and GPUs are both processors, but they're designed for very different workloads.
+          Our simulator includes both so you can see and feel the difference.
+        </p>
+        <div class="comparison">
+          <div class="comparison-card cpu">
+            <h3>CPU - The Brain</h3>
+            <ul>
+              <li>Executes one instruction at a time</li>
+              <li>Great for complex, sequential logic</li>
+              <li>Handles branching and decisions</li>
+              <li>8 general-purpose registers</li>
+              <li>256 bytes of memory</li>
+            </ul>
+          </div>
+          <div class="comparison-card gpu">
+            <h3>GPU - The Muscle</h3>
+            <ul>
+              <li>8 cores working in parallel</li>
+              <li>Processes 8 elements simultaneously</li>
+              <li>Perfect for data-parallel operations</li>
+              <li>128 bytes of VRAM</li>
+              <li>Vector math operations</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>What You'll Learn</h2>
+        <div class="feature-grid">
+          <div class="feature-card">
+            <div class="feature-icon">📝</div>
+            <h3>Assembly Language</h3>
+            <p>Write real assembly instructions and see them execute in real-time.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🔄</div>
+            <h3>CPU Pipeline</h3>
+            <p>Understand fetch, decode, execute, and writeback cycles.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">⚡</div>
+            <h3>Parallel Processing</h3>
+            <p>See how GPUs process multiple data points simultaneously.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">💾</div>
+            <h3>Memory Operations</h3>
+            <p>Watch data flow between registers, memory, and VRAM.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🏗️</div>
+            <h3>Computer Architecture</h3>
+            <p>Visualize the ALU, control unit, and data buses.</p>
+          </div>
+          <div class="feature-card">
+            <div class="feature-icon">🎯</div>
+            <h3>Hands-On Learning</h3>
+            <p>Step through code line by line or micro-operation by micro-operation.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Built for Learning</h2>
+        <p>
+          Whether you're a student learning computer architecture, a developer curious about what happens
+          beneath your high-level code, or just someone who wants to understand how computers work,
+          this simulator makes the invisible visible.
+        </p>
+        <p>
+          Start with the built-in examples, modify them, break them, and learn by doing.
+          There's no better way to understand a system than to watch it run.
+        </p>
+      </section>
+
+      <footer>
+        <p>
+          Open source on <a href="https://github.com/tyler-french/cpu-sim">GitHub</a> |
+          <a href="/">Back to Simulator</a>
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>

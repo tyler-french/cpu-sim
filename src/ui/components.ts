@@ -6,8 +6,8 @@ export function createApp(): HTMLElement {
   app.className = 'app';
   app.innerHTML = `
     <header class="header">
-      <h1>CPU Simulator</h1>
-      <p>Write assembly code and watch it execute step by step</p>
+      <h1>CPU & GPU Simulator</h1>
+      <p>Write assembly code and watch it execute step by step <a href="about.html" class="about-link">Learn more</a></p>
     </header>
 
     <main class="main-grid">

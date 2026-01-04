@@ -55,6 +55,19 @@ body {
   font-size: 0.9rem;
 }
 
+.about-link {
+  color: var(--accent-blue);
+  text-decoration: none;
+  margin-left: 8px;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.about-link:hover {
+  opacity: 1;
+  text-decoration: underline;
+}
+
 /* Layout */
 .main-grid {
   display: grid;

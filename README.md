@@ -6,6 +6,8 @@ An interactive CPU and GPU simulator for learning assembly language and understa
 
 **https://tyler-french.github.io/cpu-sim/**
 
+[Learn more about this project](https://tyler-french.github.io/cpu-sim/about.html)
+
 ## Features
 
 - Visual CPU pipeline (fetch/decode/execute/writeback)
