@@ -1,0 +1,12 @@
+actions:
+  - name: "Bazel build"
+    triggers:
+      push:
+        branches:
+          - "main"
+          - "master"
+      pull_request:
+        branches:
+          - "*"
+    steps:
+      - run: "bazel build //..."
