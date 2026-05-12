@@ -1,0 +1,19 @@
+filegroup(
+    name = "app_sources",
+    srcs = glob([
+        "*.html",
+        "*.json",
+        "*.ts",
+        "LICENSE",
+        "README.md",
+        "src/**/*.css",
+        "src/**/*.ts",
+    ]),
+)
+
+genrule(
+    name = "basic_build",
+    srcs = [":app_sources"],
+    outs = ["basic_build.txt"],
+    cmd = "echo 'Bazel build passed for cpu-sim' > $@",
+)
